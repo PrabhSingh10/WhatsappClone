@@ -17,17 +17,19 @@ import com.example.whatsappclone.util.Constants.Companion.MESSAGE_ID
 import com.example.whatsappclone.util.Constants.Companion.NAME
 import com.example.whatsappclone.util.Constants.Companion.RECEIVER_ID
 import com.example.whatsappclone.util.Constants.Companion.SENDER_ID
+import com.example.whatsappclone.util.Constants.Companion.TAG
 import com.example.whatsappclone.util.Constants.Companion.TIME
 import com.example.whatsappclone.util.Constants.Companion.TIMESTAMP
 import com.example.whatsappclone.util.Constants.Companion.UIDS
 import com.google.firebase.firestore.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.withContext
 
 class FirebaseStoreRepository {
 
@@ -181,25 +183,33 @@ class FirebaseStoreRepository {
         }
     }
 
-    suspend fun fetchingChat(userInfo: String): MutableList<ChatListModel> {
-        cb = store.collection(CHATS)
-        val profilesList = mutableListOf<ChatListModel>()
-        try {
+    suspend fun fetchingChat(userInfo: String): Flow<MutableList<ChatListModel>> {
+        return callbackFlow {
+            cb = store.collection(CHATS)
+            val profilesList = mutableListOf<ChatListModel>()
+            var listener : ListenerRegistration? = null
             val query = cb.whereArrayContains(UIDS, userInfo).get().await()
             val list = query.documents
-            for(doc in list){
-                val chatList = cb.document(doc.id).collection(MESSAGE)
-                    .orderBy(MESSAGE_ID, Query.Direction.DESCENDING).get().await()
-                val documents = chatList.documents
-                val message = if(documents.isNotEmpty()){
-                    documents[0].getString(MESSAGE)
-                }else {
-                    ""
-                }
+            for (doc in list) {
+                var message = ""
+                listener = cb.document(doc.id).collection(MESSAGE)
+                    .orderBy(MESSAGE_ID, Query.Direction.DESCENDING)
+                    .addSnapshotListener { value, error ->
+                        error?.let {
+                            Log.d(TAG, it.message.toString())
+                        }
+                        value?.let {
+                            val documents = it.documents
+                            if (documents.isNotEmpty()) {
+                                message = documents[0].getString(MESSAGE).toString()
+                                Log.d(TAG, message)
+                            }
+                        }
+                    }
 
                 val uids = doc.data?.get(UIDS) as List<*>
-                for(id in uids){
-                    if(id == userInfo){
+                for (id in uids) {
+                    if (id == userInfo) {
                         Log.d("onFound", "This is user account")
                     } else {
                         val friend = store.collection(USERS).document(id.toString()).get().await()
@@ -208,16 +218,18 @@ class FirebaseStoreRepository {
                             friend.getString(NAME).toString(),
                             friend.getString(DP).toString(),
                             doc.id,
-                            message.toString()
+                            message
                         )
                         profilesList.add(obj)
                     }
                 }
             }
-        }catch (e : Exception){
-            e.printStackTrace()
+            trySend(profilesList)
+
+            awaitClose {
+                listener?.remove()
+            }
         }
-        return profilesList
     }
 
     suspend fun sendMessage(
@@ -245,50 +257,19 @@ class FirebaseStoreRepository {
         }
     }
 
-    /*suspend fun fetchMessages(chatRoomId: String) : MutableList<MessageModel>{
-        val messages = mutableListOf<MessageModel>()
-        cb = store.collection(CHATS)
-        try{
-            /*val chatList = cb.document(chatRoomId).collection(MESSAGE)
-                .orderBy(MESSAGE_ID, Query.Direction.ASCENDING).get().await()
-            Log.d("Chat List", chatList.toString())*/
-            val doc = realtimeUpdates(chatRoomId)
-            for(i in doc) {
-                val obj = MessageModel(
-                    i.getString(SENDER_ID).toString(),
-                    i.getString(RECEIVER_ID).toString(),
-                    i.getString(MESSAGE).toString(),
-                    i.getString(TIMESTAMP).toString()
-                )
-                messages.add(obj)
-            }
-
-        }catch (e : Exception){
-            Log.e("Message Exception", e.message.toString())
-            e.printStackTrace()
-        }
-        Log.d("Message List", messages.toString())
-        return messages
-    }*/
-
-    suspend fun realtimeUpdates(chatRoomId: String) : Flow<MutableList<MessageModel>> {
-        return callbackFlow<MutableList<MessageModel>> {
+    suspend fun fetchMessages(chatRoomId: String) : Flow<MutableList<MessageModel>> {
+        return callbackFlow {
             val messages = mutableListOf<MessageModel>()
             cb = store.collection(CHATS)
-            var listener : ListenerRegistration? = null
-            listener = cb.document(chatRoomId).collection(MESSAGE)
+            val listener = cb.document(chatRoomId).collection(MESSAGE)
                 .orderBy(MESSAGE_ID, Query.Direction.ASCENDING).addSnapshotListener { value, error ->
-                    Log.d("Error,  Value", "$error , $value")
                     error?.let { err ->
-                        // emit(err)
+                        Log.d("Update Error", err.message.toString())
                     }
                     value?.let { query ->
-                        Log.d("Query Documents", query.documents.toString())
                         for(doc in query.documentChanges){
-                            Log.d("Document Type", doc.type.name)
                             when(doc.type){
                                 DocumentChange.Type.ADDED ->{
-                                    Log.d("Document Changes List", doc.document.data.toString())
                                     val i = doc.document
                                     val obj = MessageModel(
                                         i.getString(SENDER_ID).toString(),
@@ -301,7 +282,6 @@ class FirebaseStoreRepository {
                                 else -> {}
                             }
                         }
-                        Log.d("Document Type", messages.size.toString())
                         trySend(messages)
                     }
                 }

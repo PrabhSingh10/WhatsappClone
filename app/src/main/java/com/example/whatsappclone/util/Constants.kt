@@ -22,5 +22,6 @@ class Constants {
         const val SEARCH_TIME_DELAY = 200L
         const val COUNT = "count"
         const val MESSAGE_ID = "messageId"
+        const val TAG = "Logcat Check"
     }
 }

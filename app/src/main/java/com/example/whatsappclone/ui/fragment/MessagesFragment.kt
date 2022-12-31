@@ -1,20 +1,15 @@
 package com.example.whatsappclone.ui.fragment
 
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.whatsappclone.adapter.MessageAdapter
 import com.example.whatsappclone.databinding.FragmentMessagesBinding
-import com.example.whatsappclone.repository.FirebaseAuthRepository
-import com.example.whatsappclone.repository.FirebaseStoreRepository
+import com.example.whatsappclone.ui.activity.MenuActivity
 import com.example.whatsappclone.ui.viewModel.MessagesViewModel
-import com.example.whatsappclone.ui.viewModel.MessagesViewModelProviderFactory
 import com.example.whatsappclone.util.Constants.Companion.DP
 import java.util.Calendar
 
@@ -22,14 +17,7 @@ class MessagesFragment : Fragment() {
 
     private var messagesBinding : FragmentMessagesBinding? = null
     private lateinit var messageAdapter : MessageAdapter
-    private val messagesViewModel: MessagesViewModel by viewModels{
-        val firebaseAuthRepository = FirebaseAuthRepository()
-        val firebaseStoreRepository = FirebaseStoreRepository()
-        MessagesViewModelProviderFactory(
-            firebaseAuthRepository,
-            firebaseStoreRepository
-        )
-    }
+    private lateinit var messagesViewModel: MessagesViewModel
     private var values : Bundle? = null
     private var dp : String = ""
     private lateinit var friendId : String
@@ -40,6 +28,7 @@ class MessagesFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
+        messagesViewModel = (activity as MenuActivity).messagesViewModel
         messagesBinding = FragmentMessagesBinding.inflate(
             inflater, container, false
         )
@@ -69,9 +58,8 @@ class MessagesFragment : Fragment() {
     private fun setUpChats() {
         messagesViewModel.fetchMessage()
         messagesViewModel.chats.observe(viewLifecycleOwner){
-            Log.d("Document Type", it.last().toString())
-            messageAdapter.submitList(it)
-            Log.d("Document Type", messageAdapter.itemCount.toString())
+            messageAdapter.differ.submitList(it.toList())
+            messagesBinding?.rvChat?.smoothScrollToPosition(messageAdapter.itemCount)
         }
     }
 

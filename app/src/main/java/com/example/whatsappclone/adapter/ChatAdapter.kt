@@ -1,6 +1,7 @@
 package com.example.whatsappclone.adapter
 
 import android.content.Intent
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.AsyncListDiffer
@@ -13,6 +14,7 @@ import com.example.whatsappclone.databinding.ChatFriendsListBinding
 import com.example.whatsappclone.model.ChatListModel
 import com.example.whatsappclone.ui.activity.MenuActivity
 import com.example.whatsappclone.util.Constants.Companion.DP
+import com.example.whatsappclone.util.Constants.Companion.TAG
 
 class ChatAdapter : RecyclerView.Adapter<ChatAdapter.ViewHolder>() {
     class ViewHolder(chatFriendsListBinding: ChatFriendsListBinding)
@@ -43,6 +45,7 @@ class ChatAdapter : RecyclerView.Adapter<ChatAdapter.ViewHolder>() {
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val friendInfo = differ.currentList[position]
+        Log.d("Adapter Log", friendInfo.message)
 
         holder.itemView.apply {
             Glide.with(this)

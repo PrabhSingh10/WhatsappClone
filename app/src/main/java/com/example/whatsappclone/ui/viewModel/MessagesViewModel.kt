@@ -1,12 +1,13 @@
 package com.example.whatsappclone.ui.viewModel
 
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.whatsappclone.model.MessageModel
 import com.example.whatsappclone.repository.FirebaseAuthRepository
 import com.example.whatsappclone.repository.FirebaseStoreRepository
-import kotlinx.coroutines.flow.collect
+import com.example.whatsappclone.util.Constants.Companion.TAG
 import kotlinx.coroutines.launch
 
 class MessagesViewModel(
@@ -27,8 +28,9 @@ class MessagesViewModel(
     }
 
     fun fetchMessage() = viewModelScope.launch{
-        firebaseStoreRepository.realtimeUpdates(chatroomId!!).collect{
+        firebaseStoreRepository.fetchMessages(chatroomId!!).collect{
             chats.postValue(it)
+            Log.d(TAG, it.size.toString())
         }
     }
 }

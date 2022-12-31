@@ -1,13 +1,11 @@
 package com.example.whatsappclone.adapter
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
@@ -19,15 +17,7 @@ import com.example.whatsappclone.model.MessageModel
 class MessageAdapter(
     private val image : String,
     private val friendId : String
-) : ListAdapter<MessageModel, MessageAdapter.MessageViewHolder>(object : DiffUtil.ItemCallback<MessageModel>() {
-    override fun areItemsTheSame(oldItem: MessageModel, newItem: MessageModel): Boolean {
-        return oldItem == newItem
-    }
-
-    override fun areContentsTheSame(oldItem: MessageModel, newItem: MessageModel): Boolean {
-        return oldItem.toString() == newItem.toString()
-    }
-}) {
+) : RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
 
     private val sentMessage = 1
     private val receivedMessage = 2
@@ -36,6 +26,18 @@ class MessageAdapter(
         val message: TextView = view.findViewById(R.id.tv_message)
         val time : TextView = view.findViewById(R.id.tv_time)
     }
+
+    private val differCallback = object : DiffUtil.ItemCallback<MessageModel>() {
+        override fun areItemsTheSame(oldItem: MessageModel, newItem: MessageModel): Boolean {
+            return oldItem == newItem
+        }
+
+        override fun areContentsTheSame(oldItem: MessageModel, newItem: MessageModel): Boolean {
+            return oldItem == newItem
+        }
+    }
+
+    val differ = AsyncListDiffer(this@MessageAdapter, differCallback)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
         val view = if(viewType == sentMessage){
@@ -58,7 +60,7 @@ class MessageAdapter(
     }
 
     override fun getItemViewType(position: Int): Int {
-        return if(getItem(position).senderId == friendId){
+        return if(differ.currentList[position].senderId == friendId){
             receivedMessage
         }else{
             sentMessage
@@ -66,10 +68,10 @@ class MessageAdapter(
     }
 
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
-        val friend = getItem(position)
-        Log.d("Document Type", "$itemCount $position, ${friend.message}")
+        val friend = differ.currentList[position]
         holder.message.text = friend.message
         holder.time.text = friend.timeStamp
     }
 
+    override fun getItemCount(): Int = differ.currentList.size
 }

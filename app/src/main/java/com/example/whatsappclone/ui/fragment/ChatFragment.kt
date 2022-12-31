@@ -5,23 +5,24 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.whatsappclone.adapter.ChatAdapter
 import com.example.whatsappclone.databinding.FragmentChatBinding
+import com.example.whatsappclone.ui.activity.MainActivity
 import com.example.whatsappclone.ui.viewModel.ChatViewModel
 
 class ChatFragment : Fragment() {
 
     private var chatBinding : FragmentChatBinding? = null
     private lateinit var chatAdapter : ChatAdapter
-    private val chatViewModel : ChatViewModel by activityViewModels()
+    private lateinit var chatViewModel : ChatViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
 
+        chatViewModel = (activity as MainActivity).chatViewModel
         chatBinding = FragmentChatBinding.inflate(
             inflater, container, false
         )
@@ -31,17 +32,13 @@ class ChatFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setUpRecyclerView()
-    }
-
-    override fun onResume() {
-        super.onResume()
         fetchingFriends()
     }
 
     private fun fetchingFriends() {
         chatViewModel.fetchingChat()
         chatViewModel.friendList.observe(viewLifecycleOwner){
-            chatAdapter.differ.submitList(it)
+            chatAdapter.differ.submitList(it.toList())
         }
     }
 
