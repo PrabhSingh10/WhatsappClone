@@ -22,14 +22,11 @@ import com.example.whatsappclone.util.Constants.Companion.TIME
 import com.example.whatsappclone.util.Constants.Companion.TIMESTAMP
 import com.example.whatsappclone.util.Constants.Companion.UIDS
 import com.google.firebase.firestore.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
 
 class FirebaseStoreRepository {
 
@@ -187,25 +184,23 @@ class FirebaseStoreRepository {
         return callbackFlow {
             cb = store.collection(CHATS)
             val profilesList = mutableListOf<ChatListModel>()
-            var listener : ListenerRegistration? = null
             val query = cb.whereArrayContains(UIDS, userInfo).get().await()
             val list = query.documents
             for (doc in list) {
                 var message = ""
-                listener = cb.document(doc.id).collection(MESSAGE)
+                cb.document(doc.id).collection(MESSAGE)
                     .orderBy(MESSAGE_ID, Query.Direction.DESCENDING)
                     .addSnapshotListener { value, error ->
                         error?.let {
-                            Log.d(TAG, it.message.toString())
+                            Log.e("Message Error", it.message.toString())
                         }
                         value?.let {
                             val documents = it.documents
                             if (documents.isNotEmpty()) {
                                 message = documents[0].getString(MESSAGE).toString()
-                                Log.d(TAG, message)
                             }
                         }
-                    }
+                }
 
                 val uids = doc.data?.get(UIDS) as List<*>
                 for (id in uids) {
@@ -225,12 +220,10 @@ class FirebaseStoreRepository {
                 }
             }
             trySend(profilesList)
-
-            awaitClose {
-                listener?.remove()
-            }
+            awaitClose()
         }
     }
+
 
     suspend fun sendMessage(
         userInfo: String, friendInfo: String, message: String, timeStamp: String, chatRoomId: String
@@ -261,7 +254,7 @@ class FirebaseStoreRepository {
         return callbackFlow {
             val messages = mutableListOf<MessageModel>()
             cb = store.collection(CHATS)
-            val listener = cb.document(chatRoomId).collection(MESSAGE)
+            cb.document(chatRoomId).collection(MESSAGE)
                 .orderBy(MESSAGE_ID, Query.Direction.ASCENDING).addSnapshotListener { value, error ->
                     error?.let { err ->
                         Log.d("Update Error", err.message.toString())
@@ -285,9 +278,7 @@ class FirebaseStoreRepository {
                         trySend(messages)
                     }
                 }
-            awaitClose{
-                listener.remove()
-            }
+            awaitClose()
         }
     }
 
