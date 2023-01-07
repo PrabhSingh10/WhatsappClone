@@ -64,10 +64,7 @@ class MessagesFragment : Fragment() {
     }
 
     private fun sendMessage(message: String) {
-        val c = Calendar.getInstance()
-        val hour = c.get(Calendar.HOUR_OF_DAY)
-        val minute = c.get(Calendar.MINUTE)
-        val timeStamp = "$hour:$minute"
+        val timeStamp = System.currentTimeMillis().toString()
         messagesViewModel.sendMessage(
             friendId, message, timeStamp
         )

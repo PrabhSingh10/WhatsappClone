@@ -21,29 +21,32 @@ import com.example.whatsappclone.util.Constants.Companion.TAG
 import com.example.whatsappclone.util.Constants.Companion.TIME
 import com.example.whatsappclone.util.Constants.Companion.TIMESTAMP
 import com.example.whatsappclone.util.Constants.Companion.UIDS
+import com.example.whatsappclone.util.addSnapshotListenerFlow
 import com.google.firebase.firestore.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 
 class FirebaseStoreRepository {
 
-    private val store : FirebaseFirestore = FirebaseFirestore.getInstance()
-    private lateinit var db : DocumentReference
-    private lateinit var cb : CollectionReference
+    private val store: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private lateinit var db: DocumentReference
+    private lateinit var cb: CollectionReference
 
-    suspend fun addUser(userInfo: String, info: MutableMap<String, String>){
+    suspend fun addUser(userInfo: String, info: MutableMap<String, String>) {
         db = store.collection(USERS).document(userInfo)
         try {
             db.set(info).await()
-        }catch (e : Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    suspend fun fetchProfile(userInfo: String) : MutableMap<String, String> {
+    suspend fun fetchProfile(userInfo: String): MutableMap<String, String> {
         db = store.collection(USERS).document(userInfo)
         val result = mutableMapOf<String, String>()
         try {
@@ -52,38 +55,39 @@ class FirebaseStoreRepository {
             result[EMAIL] = obj.getString(EMAIL).toString()
             result[BIO] = obj.getString(BIO).toString()
             result[DP] = obj.getString(DP).toString()
-        }catch (e : Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
         }
         return result
     }
 
-    suspend fun updateProfile(userInfo: String, info: MutableMap<String, String>){
+    suspend fun updateProfile(userInfo: String, info: MutableMap<String, String>) {
         db = store.collection(USERS).document(userInfo)
         try {
             db.update(info as Map<String, Any>).await()
-        }catch (e : Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    suspend fun fetchAllProfile(userInfo: String) : MutableList<Friends> {
+    suspend fun fetchAllProfile(userInfo: String): MutableList<Friends> {
         cb = store.collection(USERS)
         val profilesList = mutableListOf<Friends>()
         try {
             val obj = cb.get().await()
             obj?.let {
                 val list = it.documents
-                for(i in list){
-                    if(i.id == userInfo){
+                for (i in list) {
+                    if (i.id == userInfo) {
                         Log.d("onFound", "This is user account")
-                    }else {
+                    } else {
                         val status = checkingStatus(userInfo, i.id)
                         var chatRoomId = ""
-                        if(status){
+                        if (status) {
                             //This means they are friends and have an already established
                             //Chat Room Id in the collection friends of the user
-                            val doc = cb.document(userInfo).collection(FRIENDS).document(i.id).get().await()
+                            val doc = cb.document(userInfo).collection(FRIENDS).document(i.id).get()
+                                .await()
                             chatRoomId = doc.getString(CHATROOM_ID).toString()
                         }
                         val contact = Friends(
@@ -99,27 +103,28 @@ class FirebaseStoreRepository {
                     }
                 }
             }
-        }catch (e : Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
         }
         return profilesList
     }
 
-    suspend fun fetchSearchProfile(userInfo: String, queryTerm: String) : MutableList<Friends> {
+    suspend fun fetchSearchProfile(userInfo: String, queryTerm: String): MutableList<Friends> {
         cb = store.collection(USERS)
         val profilesList = mutableListOf<Friends>()
         try {
             val obj = cb.orderBy(NAME).startAt(queryTerm).limit(3).get().await()
             obj?.let {
                 val list = it.documents
-                for(i in list){
-                    if(i.id == userInfo){
+                for (i in list) {
+                    if (i.id == userInfo) {
                         Log.d("onFound", "This is user account")
-                    }else {
+                    } else {
                         val status = checkingStatus(userInfo, i.id)
                         var chatRoomId = ""
-                        if(status){
-                            val doc = cb.document(userInfo).collection(FRIENDS).document(i.id).get().await()
+                        if (status) {
+                            val doc = cb.document(userInfo).collection(FRIENDS).document(i.id).get()
+                                .await()
                             chatRoomId = doc.getString(CHATROOM_ID).toString()
                         }
                         val contact = Friends(
@@ -135,7 +140,7 @@ class FirebaseStoreRepository {
                     }
                 }
             }
-        }catch (e : Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
         }
         return profilesList
@@ -148,7 +153,7 @@ class FirebaseStoreRepository {
         }
         try {
             store.collection(CHATS).document().set(obj).await()
-        }catch (e : Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
         }
 
@@ -159,12 +164,12 @@ class FirebaseStoreRepository {
                     .whereArrayContains(UIDS, userInfo)
                     .get().await()
                 val list = query.documents
-                for (doc in list){
-                    if(doc.data?.containsValue(arrayListOf(userInfo, friendInfo)) == true){
+                for (doc in list) {
+                    if (doc.data?.containsValue(arrayListOf(userInfo, friendInfo)) == true) {
                         it[CHATROOM_ID] = doc.id
                     }
                 }
-            }catch (e : Exception){
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
@@ -175,59 +180,53 @@ class FirebaseStoreRepository {
             store.collection(USERS).document(friendInfo)
                 .collection(FRIENDS).document(userInfo)
                 .set(obj1).await()
-        }catch (e : Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
     suspend fun fetchingChat(userInfo: String): Flow<MutableList<ChatListModel>> {
-        return callbackFlow {
-            cb = store.collection(CHATS)
-            val profilesList = mutableListOf<ChatListModel>()
-            val query = cb.whereArrayContains(UIDS, userInfo).get().await()
-            val list = query.documents
-            for (doc in list) {
-                var message = ""
-                cb.document(doc.id).collection(MESSAGE)
-                    .orderBy(MESSAGE_ID, Query.Direction.DESCENDING)
-                    .addSnapshotListener { value, error ->
-                        error?.let {
-                            Log.e("Message Error", it.message.toString())
+        cb = store.collection(CHATS)
+        return cb.whereArrayContains(UIDS, userInfo)
+            .addSnapshotListenerFlow()
+            .map {
+                val profilesList = mutableListOf<ChatListModel>()
+                val list = it!!.documents
+                for (doc in list) {
+                    var message = ""
+                    val docs = cb.document(doc.id).collection(MESSAGE)
+                        .orderBy(MESSAGE_ID, Query.Direction.DESCENDING)
+                        .get().await()
+                    val documents = docs.documents
+                    if (documents.isNotEmpty()) {
+                        message = documents[0].getString(MESSAGE).toString()
+                    }
+                    val uids = doc.data?.get(UIDS) as List<*>
+                    for (id in uids) {
+                        if (id == userInfo) {
+                            Log.d("onFound", "This is user account")
+                        } else {
+                            val friend =
+                                store.collection(USERS).document(id.toString()).get().await()
+                            val obj = ChatListModel(
+                                id.toString(),
+                                friend.getString(NAME).toString(),
+                                friend.getString(DP).toString(),
+                                doc.id,
+                                message
+                            )
+                            profilesList.add(obj)
                         }
-                        value?.let {
-                            val documents = it.documents
-                            if (documents.isNotEmpty()) {
-                                message = documents[0].getString(MESSAGE).toString()
-                            }
-                        }
-                }
-
-                val uids = doc.data?.get(UIDS) as List<*>
-                for (id in uids) {
-                    if (id == userInfo) {
-                        Log.d("onFound", "This is user account")
-                    } else {
-                        val friend = store.collection(USERS).document(id.toString()).get().await()
-                        val obj = ChatListModel(
-                            id.toString(),
-                            friend.getString(NAME).toString(),
-                            friend.getString(DP).toString(),
-                            doc.id,
-                            message
-                        )
-                        profilesList.add(obj)
                     }
                 }
+                profilesList
             }
-            trySend(profilesList)
-            awaitClose()
-        }
     }
 
 
     suspend fun sendMessage(
         userInfo: String, friendInfo: String, message: String, timeStamp: String, chatRoomId: String
-    ){
+    ) {
         db = store.collection(CHATS).document(chatRoomId)
         try {
             val info = db.get().await()
@@ -245,24 +244,25 @@ class FirebaseStoreRepository {
             }
             db.collection(MESSAGE).document().set(obj).await()
 
-        }catch (e : Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    suspend fun fetchMessages(chatRoomId: String) : Flow<MutableList<MessageModel>> {
+    suspend fun fetchMessages(chatRoomId: String): Flow<MutableList<MessageModel>> {
         return callbackFlow {
             val messages = mutableListOf<MessageModel>()
             cb = store.collection(CHATS)
             cb.document(chatRoomId).collection(MESSAGE)
-                .orderBy(MESSAGE_ID, Query.Direction.ASCENDING).addSnapshotListener { value, error ->
+                .orderBy(MESSAGE_ID, Query.Direction.ASCENDING)
+                .addSnapshotListener { value, error ->
                     error?.let { err ->
                         Log.d("Update Error", err.message.toString())
                     }
                     value?.let { query ->
-                        for(doc in query.documentChanges){
-                            when(doc.type){
-                                DocumentChange.Type.ADDED ->{
+                        for (doc in query.documentChanges) {
+                            when (doc.type) {
+                                DocumentChange.Type.ADDED -> {
                                     val i = doc.document
                                     val obj = MessageModel(
                                         i.getString(SENDER_ID).toString(),
@@ -282,12 +282,12 @@ class FirebaseStoreRepository {
         }
     }
 
-    private suspend fun checkingStatus(userInfo: String, friendInfo: String) : Boolean{
+    private suspend fun checkingStatus(userInfo: String, friendInfo: String): Boolean {
         try {
             val obj = store.collection(USERS).document(userInfo)
                 .collection(FRIENDS).document(friendInfo).get().await()
             return obj.exists()
-        }catch (e : Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
         }
         return false

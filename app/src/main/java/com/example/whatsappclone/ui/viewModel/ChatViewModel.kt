@@ -22,6 +22,5 @@ class ChatViewModel(
         firebaseStoreRepository.fetchingChat(userInfo).collect{
             friendList.postValue(it)
         }
-
     }
 }

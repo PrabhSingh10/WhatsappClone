@@ -1,5 +1,6 @@
 package com.example.whatsappclone.adapter
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,18 +14,21 @@ import com.example.whatsappclone.R
 import com.example.whatsappclone.databinding.ReceivedMessageBinding
 import com.example.whatsappclone.databinding.SentMessageBinding
 import com.example.whatsappclone.model.MessageModel
+import com.example.whatsappclone.util.Constants.Companion.TAG
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MessageAdapter(
-    private val image : String,
-    private val friendId : String
+    private val image: String,
+    private val friendId: String
 ) : RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
 
     private val sentMessage = 1
     private val receivedMessage = 2
 
-    class MessageViewHolder(view : View) : RecyclerView.ViewHolder(view) {
+    class MessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val message: TextView = view.findViewById(R.id.tv_message)
-        val time : TextView = view.findViewById(R.id.tv_time)
+        val time: TextView = view.findViewById(R.id.tv_time)
     }
 
     private val differCallback = object : DiffUtil.ItemCallback<MessageModel>() {
@@ -40,11 +44,11 @@ class MessageAdapter(
     val differ = AsyncListDiffer(this@MessageAdapter, differCallback)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
-        val view = if(viewType == sentMessage){
+        val view = if (viewType == sentMessage) {
             SentMessageBinding.inflate(
                 LayoutInflater.from(parent.context), parent, false
             )
-        }else {
+        } else {
             val rb = ReceivedMessageBinding.inflate(
                 LayoutInflater.from(parent.context), parent, false
             )
@@ -60,9 +64,9 @@ class MessageAdapter(
     }
 
     override fun getItemViewType(position: Int): Int {
-        return if(differ.currentList[position].senderId == friendId){
+        return if (differ.currentList[position].senderId == friendId) {
             receivedMessage
-        }else{
+        } else {
             sentMessage
         }
     }
@@ -70,7 +74,9 @@ class MessageAdapter(
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
         val friend = differ.currentList[position]
         holder.message.text = friend.message
-        holder.time.text = friend.timeStamp
+        val sdf = SimpleDateFormat("HH:mm", Locale.UK)
+        val time = sdf.format(friend.timeStamp.toLong())
+        holder.time.text = time
     }
 
     override fun getItemCount(): Int = differ.currentList.size
