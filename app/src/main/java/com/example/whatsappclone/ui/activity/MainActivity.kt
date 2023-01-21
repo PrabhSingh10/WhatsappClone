@@ -3,37 +3,42 @@ package com.example.whatsappclone.ui.activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
-import androidx.activity.addCallback
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.example.whatsappclone.R
 import com.example.whatsappclone.adapter.MainViewPagerAdapter
+import com.example.whatsappclone.data.*
 import com.example.whatsappclone.databinding.ActivityMainBinding
 import com.example.whatsappclone.repository.FirebaseAuthRepository
 import com.example.whatsappclone.repository.FirebaseStoreRepository
 import com.example.whatsappclone.ui.viewModel.ChatViewModel
 import com.example.whatsappclone.ui.viewModel.ChatViewModelProviderFactory
-import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
     private var mainBinding : ActivityMainBinding? = null
     private val title = arrayOf("Chat", "Status", "Call")
     lateinit var chatViewModel : ChatViewModel
+    lateinit var chatsDao : ChatsDao
+    lateinit var messagesDao: MessagesDao
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         mainBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(mainBinding?.root)
+
+        val db = (application as ChatApplication).db
+        chatsDao = db.chatsDao()
+        messagesDao = db.messagesDao()
 
         setSupportActionBar(mainBinding?.toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
@@ -90,10 +95,21 @@ class MainActivity : AppCompatActivity() {
             R.id.logout -> {
                 FirebaseAuth.getInstance().signOut()
                 this.finish()
+                lifecycleScope.launch{
+                    clearTableData()
+                }
                 val intent = Intent(this, LoginSignupActivity::class.java)
                 startActivity(intent)
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private suspend fun clearTableData() {
+        withContext(Dispatchers.Default){
+            chatsDao.clearChatData()
+            messagesDao.clearMessageData()
+            //dao.clearData()
+        }
     }
 }

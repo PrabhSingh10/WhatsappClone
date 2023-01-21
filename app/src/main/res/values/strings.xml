@@ -27,4 +27,5 @@
     <string name="send">Send</string>
     <string name="type_contact_name">Type Contact Name</string>
     <string name="add">Add</string>
+    <string name="new_message">New Message</string>
 </resources>

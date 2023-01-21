@@ -1,6 +1,5 @@
 package com.example.whatsappclone.adapter
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,7 +13,6 @@ import com.example.whatsappclone.R
 import com.example.whatsappclone.databinding.ReceivedMessageBinding
 import com.example.whatsappclone.databinding.SentMessageBinding
 import com.example.whatsappclone.model.MessageModel
-import com.example.whatsappclone.util.Constants.Companion.TAG
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -75,8 +73,7 @@ class MessageAdapter(
         val friend = differ.currentList[position]
         holder.message.text = friend.message
         val sdf = SimpleDateFormat("HH:mm", Locale.UK)
-        val time = sdf.format(friend.timeStamp.toLong())
-        holder.time.text = time
+        holder.time.text = sdf.format(friend.timeStamp.toLong())
     }
 
     override fun getItemCount(): Int = differ.currentList.size

@@ -3,7 +3,6 @@ package com.example.whatsappclone.util
 class Constants {
 
     companion object{
-        const val ID = "id"
         const val USERS = "Users"
         const val CHATS = "Chats"
         const val FRIENDS = "Friends"
@@ -12,7 +11,7 @@ class Constants {
         const val SENDER_ID = "senderId"
         const val RECEIVER_ID = "receiverId"
         const val TIMESTAMP = "timeStamp"
-        const val MESSAGE = "message"
+        const val MESSAGE = "Message"
         const val NAME = "userName"
         const val EMAIL = "userEmail"
         const val BIO = "userBio"
@@ -23,5 +22,7 @@ class Constants {
         const val COUNT = "count"
         const val MESSAGE_ID = "messageId"
         const val TAG = "Logcat Check"
+        const val CHAT_LIST_MODEL = "ChatListModel"
+        const val MESSAGE_STATUS = "messageStatus"
     }
 }

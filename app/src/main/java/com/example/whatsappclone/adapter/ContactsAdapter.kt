@@ -1,6 +1,6 @@
 package com.example.whatsappclone.adapter
 
-import android.content.Intent
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,22 +13,19 @@ import com.bumptech.glide.request.RequestOptions
 import com.example.whatsappclone.R
 import com.example.whatsappclone.databinding.ContactsListBinding
 import com.example.whatsappclone.model.Friends
-import com.example.whatsappclone.ui.activity.MenuActivity
-import com.example.whatsappclone.util.Constants.Companion.DP
-import java.util.Calendar
 
 class ContactsAdapter(
-    private val addFriend : (id: String, timestamp: String) -> Unit
+    private val addFriend: (id: String, timestamp: String) -> Unit
 ) : RecyclerView.Adapter<ContactsAdapter.ViewHolder>() {
 
-    class ViewHolder(contactsListBinding : ContactsListBinding)
-        : RecyclerView.ViewHolder(contactsListBinding.root){
+    class ViewHolder(contactsListBinding: ContactsListBinding) :
+        RecyclerView.ViewHolder(contactsListBinding.root) {
 
-        var civProfilePhoto = contactsListBinding.civContact
-        var tvContactName = contactsListBinding.tvContactName
-        var tvContactEmail = contactsListBinding.tvContactEmail
-        var tvContactBio = contactsListBinding.tvContactBio
-        var btnAdd = contactsListBinding.btnAdd
+        val civProfilePhoto = contactsListBinding.civContact
+        val tvContactName = contactsListBinding.tvContactName
+        val tvContactEmail = contactsListBinding.tvContactEmail
+        val tvContactBio = contactsListBinding.tvContactBio
+        val btnAdd = contactsListBinding.btnAdd
     }
 
 
@@ -64,28 +61,15 @@ class ContactsAdapter(
         holder.itemView.apply {
             Glide.with(this)
                 .load(user.userProfilePhoto)
-                .apply (
+                .apply(
                     RequestOptions().placeholder(R.drawable.ic_person)
                 )
                 .into(holder.civProfilePhoto)
 
-            setOnClickListener {
-                val intent = Intent(context, MenuActivity::class.java).also {
-                    it.putExtra("fragment", "messaging")
-                    it.putExtra("chatroomId", user.chatRoomId)
-                    it.putExtra("friendName", user.userName)
-                    it.putExtra("friendId", user.id)
-                    it.putExtra(DP, user.userProfilePhoto)
-                }
-                context.startActivity(intent)
-            }
         }
 
         holder.btnAdd.setOnClickListener {
-            val c = Calendar.getInstance()
-            val hour = c.get(Calendar.HOUR_OF_DAY)
-            val minute = c.get(Calendar.MINUTE)
-            val timeStamp = "$hour:$minute"
+            val timeStamp = System.currentTimeMillis().toString()
             addFriend(user.id, timeStamp)
             holder.btnAdd.visibility = View.INVISIBLE
         }

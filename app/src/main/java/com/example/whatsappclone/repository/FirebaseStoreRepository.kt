@@ -14,6 +14,7 @@ import com.example.whatsappclone.util.Constants.Companion.COUNT
 import com.example.whatsappclone.util.Constants.Companion.FRIENDS
 import com.example.whatsappclone.util.Constants.Companion.MESSAGE
 import com.example.whatsappclone.util.Constants.Companion.MESSAGE_ID
+import com.example.whatsappclone.util.Constants.Companion.MESSAGE_STATUS
 import com.example.whatsappclone.util.Constants.Companion.NAME
 import com.example.whatsappclone.util.Constants.Companion.RECEIVER_ID
 import com.example.whatsappclone.util.Constants.Companion.SENDER_ID
@@ -26,9 +27,7 @@ import com.google.firebase.firestore.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 
 class FirebaseStoreRepository {
@@ -150,6 +149,7 @@ class FirebaseStoreRepository {
         val obj = mutableMapOf<String, Any>().also {
             it[UIDS] = arrayListOf(userInfo, friendInfo)
             it[COUNT] = 1
+            it[MESSAGE_STATUS] = 1
         }
         try {
             store.collection(CHATS).document().set(obj).await()
@@ -193,14 +193,23 @@ class FirebaseStoreRepository {
                 val profilesList = mutableListOf<ChatListModel>()
                 val list = it!!.documents
                 for (doc in list) {
+                    var sender = ""
+                    var status = ""
                     var message = ""
+                    var time = ""   //Contains either the time of the last message
+                                    //or the time the contact was added.
                     val docs = cb.document(doc.id).collection(MESSAGE)
-                        .orderBy(MESSAGE_ID, Query.Direction.DESCENDING)
-                        .get().await()
+                        .orderBy(MESSAGE_ID, Query.Direction.DESCENDING).get().await()
                     val documents = docs.documents
                     if (documents.isNotEmpty()) {
                         message = documents[0].getString(MESSAGE).toString()
+                        sender = documents[0].getString(SENDER_ID).toString()
+                        time = documents[0].getString(TIMESTAMP).toString()
                     }
+
+                    val statusCheck = cb.document(doc.id).get().await()
+                    status = statusCheck.get(MESSAGE_STATUS).toString()
+
                     val uids = doc.data?.get(UIDS) as List<*>
                     for (id in uids) {
                         if (id == userInfo) {
@@ -208,12 +217,20 @@ class FirebaseStoreRepository {
                         } else {
                             val friend =
                                 store.collection(USERS).document(id.toString()).get().await()
+                            if (time.isEmpty()) {
+                                val d = store.collection(USERS).document(id.toString()).
+                                collection(FRIENDS).document(userInfo).get().await()
+                                time = d.getString(TIME).toString()
+                            }
                             val obj = ChatListModel(
                                 id.toString(),
                                 friend.getString(NAME).toString(),
                                 friend.getString(DP).toString(),
                                 doc.id,
-                                message
+                                message,
+                                sender,
+                                time,
+                                status
                             )
                             profilesList.add(obj)
                         }
@@ -222,7 +239,6 @@ class FirebaseStoreRepository {
                 profilesList
             }
     }
-
 
     suspend fun sendMessage(
         userInfo: String, friendInfo: String, message: String, timeStamp: String, chatRoomId: String
@@ -233,6 +249,7 @@ class FirebaseStoreRepository {
             val messageId = info.get(COUNT).toString().toInt()
             val countId = mutableMapOf<String, Any>().also {
                 it[COUNT] = (messageId + 1)
+                it[MESSAGE_STATUS] = 0
             }
             db.update(countId).await()
             val obj = mutableMapOf<String, Any>().also {
@@ -265,6 +282,7 @@ class FirebaseStoreRepository {
                                 DocumentChange.Type.ADDED -> {
                                     val i = doc.document
                                     val obj = MessageModel(
+                                        chatRoomId,
                                         i.getString(SENDER_ID).toString(),
                                         i.getString(RECEIVER_ID).toString(),
                                         i.getString(MESSAGE).toString(),
@@ -279,6 +297,16 @@ class FirebaseStoreRepository {
                     }
                 }
             awaitClose()
+        }
+    }
+
+    suspend fun messageStatus(chatRoomId: String){
+        try {
+            val update = mutableMapOf<String, Any>()
+            update[MESSAGE_STATUS] = 1
+            store.collection(CHATS).document(chatRoomId).update(update).await()
+        }catch (e: Exception){
+            e.printStackTrace()
         }
     }
 

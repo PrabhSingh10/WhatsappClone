@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.whatsappclone.model.MessageModel
 import com.example.whatsappclone.repository.FirebaseAuthRepository
 import com.example.whatsappclone.repository.FirebaseStoreRepository
-import com.example.whatsappclone.util.Constants.Companion.TAG
 import kotlinx.coroutines.launch
 
 class MessagesViewModel(
@@ -30,7 +29,10 @@ class MessagesViewModel(
     fun fetchMessage() = viewModelScope.launch{
         firebaseStoreRepository.fetchMessages(chatroomId!!).collect{
             chats.postValue(it)
-            Log.d(TAG, it.size.toString())
         }
+    }
+
+    fun messageStatus() = viewModelScope.launch {
+        firebaseStoreRepository.messageStatus(chatroomId!!)
     }
 }

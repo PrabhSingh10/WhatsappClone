@@ -18,6 +18,21 @@
         app:layout_constraintTop_toTopOf="parent"/>
 
     <TextView
+        android:id="@+id/new_message_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/new_message"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        android:background="@drawable/new_message_indicator"
+        android:padding="7dp"
+        app:layout_constraintTop_toTopOf="@id/tv_name"
+        app:layout_constraintBottom_toBottomOf="@id/tv_name"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:visibility="invisible"
+        android:layout_margin="2dp"/>
+
+    <TextView
         android:id="@+id/tv_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -42,8 +57,20 @@
         android:layout_marginHorizontal="10dp"
         android:maxLines="1"
         app:layout_constraintTop_toBottomOf="@id/tv_name"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/tv_message_time"
         app:layout_constraintStart_toEndOf="@id/civ_dp"/>
+
+    <TextView
+        android:id="@+id/tv_message_time"
+        android:layout_width="40dp"
+        android:layout_height="wrap_content"
+        tools:text="06:09"
+        android:textColor="@color/text"
+        android:textSize="13sp"
+        android:layout_marginBottom="3dp"
+        android:layout_marginHorizontal="10dp"
+        app:layout_constraintBottom_toBottomOf="@id/line"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
     <View
         android:id="@+id/line"
@@ -51,6 +78,17 @@
         android:layout_height=".5dp"
         android:background="@color/black"
         android:layout_marginTop="15dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_message"/>
+
+    <View
+        android:id="@+id/line2"
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:background="#002200"
+        android:layout_marginTop="15dp"
+        android:visibility="invisible"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_message"/>

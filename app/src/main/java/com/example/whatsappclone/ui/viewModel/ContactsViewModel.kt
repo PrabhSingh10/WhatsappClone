@@ -1,12 +1,12 @@
 package com.example.whatsappclone.ui.viewModel
 
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.whatsappclone.model.Friends
 import com.example.whatsappclone.repository.FirebaseAuthRepository
 import com.example.whatsappclone.repository.FirebaseStoreRepository
-import com.google.firebase.auth.UserInfo
 import kotlinx.coroutines.launch
 
 class ContactsViewModel(
