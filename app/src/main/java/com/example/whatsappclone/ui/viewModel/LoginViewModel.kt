@@ -14,25 +14,13 @@ class LoginViewModel(private val firebaseAuthRepository: FirebaseAuthRepository)
 
     val loginResult = MutableLiveData<AuthState<FirebaseUser>>()
 
-    fun loginWithEmailPassword(email : String, password : String) = viewModelScope.launch {
+    fun loginWithEmailPassword(email: String, password: String) = viewModelScope.launch {
         loginResult.postValue(AuthState.Loading())
         try {
             firebaseAuthRepository.loginUser(email, password).let {
                 loginResult.postValue(AuthState.Success(it))
             }
-        }catch (e : FirebaseAuthException){
-            loginResult.postValue(AuthState.Failure(e.message!!))
-        }
-    }
-
-    fun loginWithGoogle(credential: AuthCredential) = viewModelScope.launch {
-        loginResult.postValue(AuthState.Loading())
-        try {
-            firebaseAuthRepository.loginUserUsingGoogle(credential).let {
-                loginResult.postValue(AuthState.Success(it))
-
-            }
-        }catch (e : FirebaseAuthException){
+        } catch (e: FirebaseAuthException) {
             loginResult.postValue(AuthState.Failure(e.message!!))
         }
     }

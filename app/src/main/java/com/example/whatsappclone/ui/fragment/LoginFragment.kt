@@ -29,7 +29,6 @@ import com.google.firebase.auth.GoogleAuthProvider
 class LoginFragment : Fragment() {
 
     private var loginBinding : FragmentLoginBinding? = null
-    private lateinit var googleSignInClient : GoogleSignInClient
     private val loginViewModel: LoginViewModel by activityViewModels()
 
     override fun onCreateView(
@@ -65,10 +64,6 @@ class LoginFragment : Fragment() {
             }
         }
 
-        loginBinding?.ivGoogle?.setOnClickListener {
-            googleSignIn()
-        }
-
         loginViewModel.loginResult.observe(viewLifecycleOwner, Observer {
             when(it){
 
@@ -95,38 +90,6 @@ class LoginFragment : Fragment() {
                 R.id.action_loginFragment_to_signupFragment
             )
         }
-    }
-
-    private fun googleSignIn() {
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build()
-
-        googleSignInClient = GoogleSignIn.getClient(requireContext(), gso)
-
-        val intent = googleSignInClient.signInIntent
-        googleSignInLauncher.launch(intent)
-    }
-
-    private val googleSignInLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()){
-        if(it.resultCode == RESULT_OK){
-            val task = GoogleSignIn.getSignedInAccountFromIntent(it.data)
-            if(task.isSuccessful){
-                val account = task.result
-                account?.let {
-                    loginUsingGoogle(account)
-                }
-            }else{
-                Toast.makeText(activity, task.exception.toString(), Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun loginUsingGoogle(account: GoogleSignInAccount) {
-        val credential = GoogleAuthProvider.getCredential(account.idToken, null)
-        loginViewModel.loginWithGoogle(credential)
     }
 
     private fun showProgressBar() {

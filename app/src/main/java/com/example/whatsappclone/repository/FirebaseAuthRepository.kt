@@ -19,9 +19,4 @@ class FirebaseAuthRepository {
         auth.signInWithEmailAndPassword(email, password).await()
         return auth.currentUser ?: throw FirebaseAuthException("","")
     }
-
-    suspend fun loginUserUsingGoogle(credential: AuthCredential) : FirebaseUser {
-        auth.signInWithCredential(credential).await()
-        return auth.currentUser ?: throw FirebaseAuthException("","")
-    }
 }

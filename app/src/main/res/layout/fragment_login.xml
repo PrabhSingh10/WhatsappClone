@@ -97,33 +97,6 @@
         android:layout_marginTop="30dp"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <TextView
-        android:id="@+id/tv1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/or_login_with"
-        android:textSize="15sp"
-        android:textColor="@color/black"
-        android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/btn_login"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="10dp" />
-
-    <ImageView
-        android:id="@+id/iv_google"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:padding="10dp"
-        android:layout_marginHorizontal="5dp"
-        android:background="@drawable/google_bg"
-        android:src="@drawable/ic_google"
-        app:layout_constraintTop_toBottomOf="@id/tv1"
-        app:layout_constraintStart_toStartOf="@id/tv1"
-        app:layout_constraintEnd_toEndOf="@id/tv1"
-        android:layout_marginTop="15dp"
-        android:contentDescription="@string/google" />
-
     <LinearLayout
         android:id="@+id/ll_signup"
         android:layout_width="match_parent"
@@ -132,7 +105,7 @@
         android:gravity="center"
         android:layout_margin="20dp"
         android:background="?attr/selectableItemBackground"
-        app:layout_constraintTop_toBottomOf="@id/iv_google"
+        app:layout_constraintTop_toBottomOf="@id/btn_login"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
