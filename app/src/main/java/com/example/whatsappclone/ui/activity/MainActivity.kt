@@ -3,6 +3,7 @@ package com.example.whatsappclone.ui.activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.core.content.ContextCompat
@@ -24,10 +25,10 @@ import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
-    private var mainBinding : ActivityMainBinding? = null
+    private var mainBinding: ActivityMainBinding? = null
     private val title = arrayOf("Chat", "Status", "Call")
-    lateinit var chatViewModel : ChatViewModel
-    lateinit var chatsDao : ChatsDao
+    lateinit var chatViewModel: ChatViewModel
+    lateinit var chatsDao: ChatsDao
     lateinit var messagesDao: MessagesDao
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,6 +43,7 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(mainBinding?.toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
+        //Menu Icon Tint
         mainBinding?.toolbar?.overflowIcon?.setTint(
             ContextCompat.getColor(
                 this,
@@ -57,12 +59,14 @@ class MainActivity : AppCompatActivity() {
             firebaseStoreRepository
         )
 
-        chatViewModel = ViewModelProvider(this@MainActivity,
-        chatViewModelProviderFactory)[ChatViewModel::class.java]
+        chatViewModel = ViewModelProvider(
+            this@MainActivity,
+            chatViewModelProviderFactory
+        )[ChatViewModel::class.java]
 
         val adapter = MainViewPagerAdapter(this)
         mainBinding?.viewPager?.adapter = adapter
-        TabLayoutMediator(mainBinding!!.tabLayout, mainBinding!!.viewPager){ tab, position ->
+        TabLayoutMediator(mainBinding!!.tabLayout, mainBinding!!.viewPager) { tab, position ->
             tab.text = title[position]
         }.attach()
 
@@ -80,7 +84,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when(item.itemId){
+        when (item.itemId) {
 
             R.id.profile -> {
                 val intent = Intent(this, MenuActivity::class.java)
@@ -93,11 +97,12 @@ class MainActivity : AppCompatActivity() {
                 startActivity(intent)
             }
             R.id.logout -> {
+                chatViewModel.updateOnlineStatus("Offline")
                 FirebaseAuth.getInstance().signOut()
-                this.finish()
-                lifecycleScope.launch{
+                lifecycleScope.launch {
                     clearTableData()
                 }
+                this.finish()
                 val intent = Intent(this, LoginSignupActivity::class.java)
                 startActivity(intent)
             }
@@ -106,10 +111,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private suspend fun clearTableData() {
-        withContext(Dispatchers.Default){
+        withContext(Dispatchers.Default) {
             chatsDao.clearChatData()
             messagesDao.clearMessageData()
-            //dao.clearData()
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        chatViewModel.updateOnlineStatus("Online")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        chatViewModel.updateOnlineStatus("Offline")
     }
 }

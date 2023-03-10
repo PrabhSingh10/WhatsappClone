@@ -1,7 +1,6 @@
 package com.example.whatsappclone.adapter
 
 import android.content.Intent
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,7 +13,9 @@ import com.example.whatsappclone.R
 import com.example.whatsappclone.databinding.ChatFriendsListBinding
 import com.example.whatsappclone.model.ChatListModel
 import com.example.whatsappclone.ui.activity.MenuActivity
+import com.example.whatsappclone.util.Constants
 import com.example.whatsappclone.util.Constants.Companion.DP
+import com.example.whatsappclone.util.Constants.Companion.ONLINE_STATUS
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -72,6 +73,7 @@ class ChatAdapter : RecyclerView.Adapter<ChatAdapter.ViewHolder>() {
                 context.startActivity(intent)
             }
         }
+
         holder.name.text = friendInfo.friendName
         holder.message.text = friendInfo.message
         if(friendInfo.message.isNotEmpty()){

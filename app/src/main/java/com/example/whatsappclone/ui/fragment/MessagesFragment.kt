@@ -14,7 +14,6 @@ import com.example.whatsappclone.databinding.FragmentMessagesBinding
 import com.example.whatsappclone.ui.activity.MenuActivity
 import com.example.whatsappclone.ui.viewModel.MessagesViewModel
 import com.example.whatsappclone.util.Constants.Companion.DP
-import com.example.whatsappclone.util.Constants.Companion.TAG
 import kotlinx.coroutines.launch
 
 class MessagesFragment : Fragment() {
@@ -53,11 +52,24 @@ class MessagesFragment : Fragment() {
 
         setUpChats()
         setUpRecyclerView()
+        checkOnlineStatus()
 
         messagesBinding?.ibSend?.setOnClickListener {
             if (messagesBinding?.etMessage?.text?.isNotEmpty() == true) {
                 sendMessage(messagesBinding?.etMessage?.text!!.toString())
                 messagesBinding?.etMessage?.text!!.clear()
+            }
+        }
+    }
+
+    private fun checkOnlineStatus(){
+        messagesViewModel.checkOnlineStatus(friendId)
+        messagesViewModel.onlineStatus.observe(viewLifecycleOwner) {
+            Log.d("Online Status", it.toString())
+            if(it){
+                (activity as MenuActivity).menuBinding.ivOnline.visibility = View.VISIBLE
+            }else{
+                (activity as MenuActivity).menuBinding.ivOnline.visibility = View.INVISIBLE
             }
         }
     }
@@ -92,8 +104,8 @@ class MessagesFragment : Fragment() {
         messagesBinding?.rvChat?.adapter = messageAdapter
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onPause() {
+        super.onPause()
         if(messageAdapter.differ.currentList.last().senderId == friendId){
             messagesViewModel.messageStatus()
         }

@@ -2,6 +2,7 @@ package com.example.whatsappclone.ui.activity
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import androidx.lifecycle.ViewModelProvider
 import com.example.whatsappclone.R
 import com.example.whatsappclone.data.ChatApplication
@@ -17,10 +18,12 @@ import com.example.whatsappclone.ui.fragment.MessagesFragment
 import com.example.whatsappclone.ui.fragment.ProfileFragment
 import com.example.whatsappclone.ui.viewModel.*
 import com.example.whatsappclone.util.Constants.Companion.DP
+import com.example.whatsappclone.util.Constants.Companion.ONLINE_STATUS
+import com.google.firebase.auth.FirebaseAuth
 
 class MenuActivity() : AppCompatActivity() {
 
-    private lateinit var menuBinding: ActivityMenuBinding
+    lateinit var menuBinding: ActivityMenuBinding
     lateinit var profileViewModel: ProfileViewModel
     lateinit var contactsViewModel: ContactsViewModel
     lateinit var messagesViewModel: MessagesViewModel
@@ -114,5 +117,15 @@ class MenuActivity() : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        messagesViewModel.updateOnlineStatus("Online")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        messagesViewModel.updateOnlineStatus("Offline")
     }
 }

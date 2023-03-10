@@ -37,4 +37,5 @@ class ProfileViewModel(
         info[DP] = firebaseStorageRepository.updateProfilePicture(userInfo, image).toString()
         firebaseStoreRepository.updateProfile(userInfo, info)
     }
+
 }

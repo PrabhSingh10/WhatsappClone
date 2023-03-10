@@ -16,9 +16,9 @@ import com.example.whatsappclone.util.Constants.Companion.MESSAGE
 import com.example.whatsappclone.util.Constants.Companion.MESSAGE_ID
 import com.example.whatsappclone.util.Constants.Companion.MESSAGE_STATUS
 import com.example.whatsappclone.util.Constants.Companion.NAME
+import com.example.whatsappclone.util.Constants.Companion.ONLINE_STATUS
 import com.example.whatsappclone.util.Constants.Companion.RECEIVER_ID
 import com.example.whatsappclone.util.Constants.Companion.SENDER_ID
-import com.example.whatsappclone.util.Constants.Companion.TAG
 import com.example.whatsappclone.util.Constants.Companion.TIME
 import com.example.whatsappclone.util.Constants.Companion.TIMESTAMP
 import com.example.whatsappclone.util.Constants.Companion.UIDS
@@ -63,7 +63,7 @@ class FirebaseStoreRepository {
     suspend fun updateProfile(userInfo: String, info: MutableMap<String, String>) {
         db = store.collection(USERS).document(userInfo)
         try {
-            db.update(info as Map<String, Any>).await()
+            db.update(info as Map<String, String>).await()
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -197,7 +197,7 @@ class FirebaseStoreRepository {
                     var status = ""
                     var message = ""
                     var time = ""   //Contains either the time of the last message
-                                    //or the time the contact was added.
+                    //or the time the contact was added.
                     val docs = cb.document(doc.id).collection(MESSAGE)
                         .orderBy(MESSAGE_ID, Query.Direction.DESCENDING).get().await()
                     val documents = docs.documents
@@ -218,8 +218,8 @@ class FirebaseStoreRepository {
                             val friend =
                                 store.collection(USERS).document(id.toString()).get().await()
                             if (time.isEmpty()) {
-                                val d = store.collection(USERS).document(id.toString()).
-                                collection(FRIENDS).document(userInfo).get().await()
+                                val d = store.collection(USERS).document(id.toString())
+                                    .collection(FRIENDS).document(userInfo).get().await()
                                 time = d.getString(TIME).toString()
                             }
                             val obj = ChatListModel(
@@ -300,12 +300,32 @@ class FirebaseStoreRepository {
         }
     }
 
-    suspend fun messageStatus(chatRoomId: String){
+    suspend fun onlineStatus(userInfo: String): Flow<Boolean> {
+        return callbackFlow{
+            db = store.collection(USERS).document(userInfo)
+            try {
+                db.addSnapshotListener { value, error ->
+                    error?.let {
+                        it.printStackTrace()
+                    }
+                    value?.let {
+                        val status = (it.getString(ONLINE_STATUS) == "Online")
+                        trySend(status)
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            awaitClose()
+        }
+    }
+
+    suspend fun messageStatus(chatRoomId: String) {
         try {
             val update = mutableMapOf<String, Any>()
             update[MESSAGE_STATUS] = 1
             store.collection(CHATS).document(chatRoomId).update(update).await()
-        }catch (e: Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }

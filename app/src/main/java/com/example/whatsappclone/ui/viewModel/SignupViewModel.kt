@@ -29,15 +29,11 @@ class SignupViewModel(
                 obj[Constants.NAME] = name
                 obj[Constants.BIO] = "Available"
                 obj[Constants.DP] = ""
+                obj[Constants.ONLINE_STATUS] = "Online"
                 firebaseStoreRepository.addUser(it.uid, obj)
-                //addUser(it.uid, obj)
             }
         }catch (e : FirebaseAuthException){
             signupResult.postValue(AuthState.Failure(e.message!!))
         }
     }
-/*
-    private fun addUser(userInfo : String, info : MutableMap<String, String>) = viewModelScope.launch{
-        firebaseStoreRepository.addUser(userInfo, info)
-    }*/
 }

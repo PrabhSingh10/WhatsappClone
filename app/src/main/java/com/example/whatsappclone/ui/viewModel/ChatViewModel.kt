@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.whatsappclone.model.ChatListModel
 import com.example.whatsappclone.repository.FirebaseAuthRepository
 import com.example.whatsappclone.repository.FirebaseStoreRepository
+import com.example.whatsappclone.util.Constants.Companion.ONLINE_STATUS
 import kotlinx.coroutines.launch
 
 class ChatViewModel(
@@ -20,5 +21,12 @@ class ChatViewModel(
         firebaseStoreRepository.fetchingChat(userInfo).collect{
             friendList.postValue(it)
         }
+    }
+
+    fun updateOnlineStatus(status : String) = viewModelScope.launch {
+        val onlineStatus = mutableMapOf<String, String>().also {
+            it[ONLINE_STATUS] = status
+        }
+        firebaseStoreRepository.updateProfile(userInfo, onlineStatus)
     }
 }

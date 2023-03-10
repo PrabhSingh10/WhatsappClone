@@ -91,6 +91,7 @@
         android:fontFamily="@font/cantata_one"
         android:textStyle="bold"
         android:textSize="20sp"
+        android:textColor="@color/white"
         android:backgroundTint="@color/main_text_color"
         app:layout_constraintTop_toBottomOf="@id/til_password"
         app:layout_constraintStart_toStartOf="parent"

@@ -20,7 +20,6 @@ class ChatFragment : Fragment() {
     private lateinit var chatAdapter : ChatAdapter
     private lateinit var chatViewModel : ChatViewModel
     private lateinit var chatsDao : ChatsDao
-    //private lateinit var chatsDao : ChatListAndMessagesDao
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

@@ -19,14 +19,24 @@ import java.util.*
 class MessageAdapter(
     private val image: String,
     private val friendId: String
-) : RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    private val sentMessage = 1
-    private val receivedMessage = 2
+    companion object {
+        private const val sentMessage = 1
+        private const val receivedMessage = 2
+    }
 
-    class MessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val message: TextView = view.findViewById(R.id.tv_message)
-        val time: TextView = view.findViewById(R.id.tv_time)
+    class SentMessageViewHolder(sentMessageBinding: SentMessageBinding) :
+        RecyclerView.ViewHolder(sentMessageBinding.root) {
+        val message = sentMessageBinding.tvMessage
+        val time = sentMessageBinding.tvTime
+    }
+
+    class ReceivedMessageViewHolder(receivedMessageBinding: ReceivedMessageBinding) :
+        RecyclerView.ViewHolder(receivedMessageBinding.root) {
+        val message = receivedMessageBinding.tvMessage
+        val time = receivedMessageBinding.tvTime
+        val dp = receivedMessageBinding.civDp
     }
 
     private val differCallback = object : DiffUtil.ItemCallback<MessageModel>() {
@@ -41,24 +51,18 @@ class MessageAdapter(
 
     val differ = AsyncListDiffer(this@MessageAdapter, differCallback)
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
-        val view = if (viewType == sentMessage) {
-            SentMessageBinding.inflate(
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder{
+        return if (viewType == sentMessage) {
+            val view = SentMessageBinding.inflate(
                 LayoutInflater.from(parent.context), parent, false
             )
+            SentMessageViewHolder(view)
         } else {
-            val rb = ReceivedMessageBinding.inflate(
+            val view = ReceivedMessageBinding.inflate(
                 LayoutInflater.from(parent.context), parent, false
             )
-            Glide.with(rb.root)
-                .load(image)
-                .apply(
-                    RequestOptions().placeholder(R.drawable.ic_person)
-                )
-                .into(rb.civDp)
-            rb
+            ReceivedMessageViewHolder(view)
         }
-        return MessageViewHolder(view.root)
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -69,11 +73,27 @@ class MessageAdapter(
         }
     }
 
-    override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val friend = differ.currentList[position]
-        holder.message.text = friend.message
         val sdf = SimpleDateFormat("HH:mm", Locale.UK)
-        holder.time.text = sdf.format(friend.timeStamp.toLong())
+        val t = sdf.format(friend.timeStamp.toLong())
+        if(getItemViewType(position) == sentMessage){
+            (holder as SentMessageViewHolder).apply {
+                message.text = friend.message
+                time.text = t
+            }
+        }else {
+            (holder as ReceivedMessageViewHolder).apply {
+                message.text = friend.message
+                time.text = t
+                Glide.with(dp.context)
+                    .load(image)
+                    .apply(
+                        RequestOptions().placeholder(R.drawable.ic_person)
+                    )
+                    .into(dp)
+            }
+        }
     }
 
     override fun getItemCount(): Int = differ.currentList.size
