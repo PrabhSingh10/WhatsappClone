@@ -21,6 +21,7 @@ import com.example.whatsappclone.util.Constants.Companion.RECEIVER_ID
 import com.example.whatsappclone.util.Constants.Companion.SENDER_ID
 import com.example.whatsappclone.util.Constants.Companion.TIME
 import com.example.whatsappclone.util.Constants.Companion.TIMESTAMP
+import com.example.whatsappclone.util.Constants.Companion.TYPING_STATUS
 import com.example.whatsappclone.util.Constants.Companion.UIDS
 import com.example.whatsappclone.util.addSnapshotListenerFlow
 import com.google.firebase.firestore.*
@@ -301,7 +302,7 @@ class FirebaseStoreRepository {
     }
 
     suspend fun onlineStatus(userInfo: String): Flow<Boolean> {
-        return callbackFlow{
+        return callbackFlow {
             db = store.collection(USERS).document(userInfo)
             try {
                 db.addSnapshotListener { value, error ->
@@ -327,6 +328,41 @@ class FirebaseStoreRepository {
             store.collection(CHATS).document(chatRoomId).update(update).await()
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    //The user updates the friend's document to tell that it's typing(user)
+    suspend fun updateTypingStatus(
+        userInfo: String,
+        friendInfo: String,
+        info: MutableMap<String, String>
+    ) {
+        try {
+            store.collection(USERS).document(friendInfo).collection(FRIENDS).document(userInfo)
+                .update(info as Map<String, String>).await()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    //The user checks if friend has updated it's document(user's) to tell that it's typing(friend)
+    suspend fun checkTypingStatus(userInfo: String, friendInfo: String): Flow<Boolean> {
+        return callbackFlow {
+            db = store.collection(USERS).document(userInfo).collection(FRIENDS).document(friendInfo)
+            try {
+                db.addSnapshotListener { value, error ->
+                    error?.let {
+                        it.printStackTrace()
+                    }
+                    value?.let {
+                        val status = (it.get(TYPING_STATUS) == "Y")
+                        trySend(status)
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            awaitClose()
         }
     }
 

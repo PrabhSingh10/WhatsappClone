@@ -12,6 +12,7 @@ import com.example.whatsappclone.databinding.ActivityMenuBinding
 import com.example.whatsappclone.repository.FirebaseAuthRepository
 import com.example.whatsappclone.repository.FirebaseStorageRepository
 import com.example.whatsappclone.repository.FirebaseStoreRepository
+import com.example.whatsappclone.repository.RoomRepository
 import com.example.whatsappclone.ui.fragment.AboutUsFragment
 import com.example.whatsappclone.ui.fragment.ContactsFragment
 import com.example.whatsappclone.ui.fragment.MessagesFragment
@@ -27,14 +28,11 @@ class MenuActivity() : AppCompatActivity() {
     lateinit var profileViewModel: ProfileViewModel
     lateinit var contactsViewModel: ContactsViewModel
     lateinit var messagesViewModel: MessagesViewModel
-    lateinit var messagesDao: MessagesDao
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         menuBinding = ActivityMenuBinding.inflate(layoutInflater)
         setContentView(menuBinding.root)
-
-        messagesDao = (application as ChatApplication).db.messagesDao()
 
         setSupportActionBar(menuBinding.toolbarMenu)
         supportActionBar?.setDisplayShowTitleEnabled(false)
@@ -46,6 +44,7 @@ class MenuActivity() : AppCompatActivity() {
         val firebaseAuthRepository = FirebaseAuthRepository()
         val firebaseStoreRepository = FirebaseStoreRepository()
         val firebaseStorageRepository = FirebaseStorageRepository()
+        val roomRepository = RoomRepository((application as ChatApplication).db)
 
         val profileViewModelProviderFactory = ProfileViewModelProviderFactory(
             firebaseAuthRepository,
@@ -70,7 +69,8 @@ class MenuActivity() : AppCompatActivity() {
 
         val messagesViewModelProviderFactory = MessagesViewModelProviderFactory(
             firebaseAuthRepository,
-            firebaseStoreRepository
+            firebaseStoreRepository,
+            roomRepository
         )
 
         messagesViewModel = ViewModelProvider(
@@ -106,6 +106,7 @@ class MenuActivity() : AppCompatActivity() {
                     menuBinding.tvTitle.text = intent.getStringExtra("friendName")
                     val bundle = Bundle()
                     val fragment = MessagesFragment()
+
                     bundle.putString("chatroomId", intent.getStringExtra("chatroomId"))
                     bundle.putString("friendName", intent.getStringExtra("friendName"))
                     bundle.putString("friendId", intent.getStringExtra("friendId"))

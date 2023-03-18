@@ -6,20 +6,34 @@ import androidx.lifecycle.viewModelScope
 import com.example.whatsappclone.model.ChatListModel
 import com.example.whatsappclone.repository.FirebaseAuthRepository
 import com.example.whatsappclone.repository.FirebaseStoreRepository
+import com.example.whatsappclone.repository.RoomRepository
 import com.example.whatsappclone.util.Constants.Companion.ONLINE_STATUS
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class ChatViewModel(
     firebaseAuthRepository: FirebaseAuthRepository,
-    private val firebaseStoreRepository: FirebaseStoreRepository
+    private val firebaseStoreRepository: FirebaseStoreRepository,
+    private val roomRepository: RoomRepository
 ) : ViewModel() {
 
     private val userInfo = firebaseAuthRepository.auth.currentUser?.uid.toString()
-    val friendList = MutableLiveData<MutableList<ChatListModel>>()
+    val friends = MutableLiveData<List<ChatListModel>>()
 
-    fun fetchingChat() = viewModelScope.launch {
+    init {
+        fetchingChat()  //Fetches the data of the recent chats and new friends from firebase to store it in room
+        fetchingFriends()   //Fetches the same data from the room so that the view can observe it and show it in the fragment
+    }
+
+    private fun fetchingChat() = viewModelScope.launch {
         firebaseStoreRepository.fetchingChat(userInfo).collect{
-            friendList.postValue(it)
+            roomRepository.upsertChat(it)
+        }
+    }
+
+    private fun fetchingFriends() = viewModelScope.launch {
+        roomRepository.fetchFriends().collect{
+            friends.postValue(it)
         }
     }
 
@@ -28,5 +42,9 @@ class ChatViewModel(
             it[ONLINE_STATUS] = status
         }
         firebaseStoreRepository.updateProfile(userInfo, onlineStatus)
+    }
+
+    fun clearRoom() = viewModelScope.launch {
+        roomRepository.clearRoom()
     }
 }

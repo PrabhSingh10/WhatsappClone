@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         tools:text="Received Message"
         android:textColor="@color/bg"
-        android:textSize="15sp"
+        android:textSize="13sp"
         android:layout_marginEnd="50dp"
         android:layout_marginStart="5dp"
         android:paddingVertical="12dp"

@@ -14,7 +14,6 @@ import com.example.whatsappclone.model.MessageModel
 abstract class ChatDatabase : RoomDatabase() {
 
     abstract fun chatsDao(): ChatsDao
-
     abstract fun messagesDao(): MessagesDao
 
     companion object {

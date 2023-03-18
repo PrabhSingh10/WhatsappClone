@@ -15,8 +15,10 @@ import com.example.whatsappclone.data.*
 import com.example.whatsappclone.databinding.ActivityMainBinding
 import com.example.whatsappclone.repository.FirebaseAuthRepository
 import com.example.whatsappclone.repository.FirebaseStoreRepository
+import com.example.whatsappclone.repository.RoomRepository
 import com.example.whatsappclone.ui.viewModel.ChatViewModel
 import com.example.whatsappclone.ui.viewModel.ChatViewModelProviderFactory
+import com.example.whatsappclone.ui.viewModel.MessagesViewModel
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
@@ -28,8 +30,7 @@ class MainActivity : AppCompatActivity() {
     private var mainBinding: ActivityMainBinding? = null
     private val title = arrayOf("Chat", "Status", "Call")
     lateinit var chatViewModel: ChatViewModel
-    lateinit var chatsDao: ChatsDao
-    lateinit var messagesDao: MessagesDao
+    lateinit var messageViewModel : MessagesViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,9 +38,6 @@ class MainActivity : AppCompatActivity() {
         mainBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(mainBinding?.root)
 
-        val db = (application as ChatApplication).db
-        chatsDao = db.chatsDao()
-        messagesDao = db.messagesDao()
 
         setSupportActionBar(mainBinding?.toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
@@ -53,10 +51,12 @@ class MainActivity : AppCompatActivity() {
 
         val firebaseAuthRepository = FirebaseAuthRepository()
         val firebaseStoreRepository = FirebaseStoreRepository()
+        val roomRepository = RoomRepository((application as ChatApplication).db)
 
         val chatViewModelProviderFactory = ChatViewModelProviderFactory(
             firebaseAuthRepository,
-            firebaseStoreRepository
+            firebaseStoreRepository,
+            roomRepository
         )
 
         chatViewModel = ViewModelProvider(
@@ -75,7 +75,6 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra("fragment", "contacts")
             startActivity(intent)
         }
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -99,9 +98,7 @@ class MainActivity : AppCompatActivity() {
             R.id.logout -> {
                 chatViewModel.updateOnlineStatus("Offline")
                 FirebaseAuth.getInstance().signOut()
-                lifecycleScope.launch {
-                    clearTableData()
-                }
+                clearTableData()
                 this.finish()
                 val intent = Intent(this, LoginSignupActivity::class.java)
                 startActivity(intent)
@@ -110,11 +107,8 @@ class MainActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    private suspend fun clearTableData() {
-        withContext(Dispatchers.Default) {
-            chatsDao.clearChatData()
-            messagesDao.clearMessageData()
-        }
+    private fun clearTableData() {
+        chatViewModel.clearRoom()
     }
 
     override fun onStart() {

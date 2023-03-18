@@ -18,6 +18,7 @@ class Constants {
         const val DP = "userProfilePhoto"
         const val PASSWORD = "userPassword"
         const val ONLINE_STATUS = "userOnlineStatus"
+        const val TYPING_STATUS = "userTypingStatus"
         const val CHATROOM_ID = "chatRoomId"
         const val SEARCH_TIME_DELAY = 200L
         const val COUNT = "count"

@@ -1,6 +1,8 @@
 package com.example.whatsappclone.ui.fragment
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -25,15 +27,18 @@ class MessagesFragment : Fragment() {
     private var dp: String = ""
     private lateinit var friendId: String
     private lateinit var chatRoomId: String
-    private lateinit var messagesDao: MessagesDao
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
 
+        values = arguments
+        dp = values?.getString(DP).toString()
+        friendId = values?.getString("friendId").toString()
         messagesViewModel = (activity as MenuActivity).messagesViewModel
-        messagesDao = (activity as MenuActivity).messagesDao
+        messagesViewModel.chatroomId = values?.getString("chatroomId").toString()
+        messagesViewModel.fetchMessage()
 
         messagesBinding = FragmentMessagesBinding.inflate(
             inflater, container, false
@@ -44,15 +49,9 @@ class MessagesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        values = arguments
-        dp = values?.getString(DP).toString()
-        friendId = values?.getString("friendId").toString()
-        chatRoomId = values?.getString("chatroomId").toString()
-        messagesViewModel.chatroomId = chatRoomId
-
-        setUpChats()
         setUpRecyclerView()
         checkOnlineStatus()
+        checkTypingStatus()
 
         messagesBinding?.ibSend?.setOnClickListener {
             if (messagesBinding?.etMessage?.text?.isNotEmpty() == true) {
@@ -60,27 +59,42 @@ class MessagesFragment : Fragment() {
                 messagesBinding?.etMessage?.text!!.clear()
             }
         }
+
+        messagesBinding?.etMessage?.addTextChangedListener(object : TextWatcher{
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if(s.toString().isNotEmpty()){
+                    messagesViewModel.updateTypingStatus(friendId, "Y")
+                }else {
+                    messagesViewModel.updateTypingStatus(friendId, "N")
+                }
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+
+        } )
+    }
+
+    private fun checkTypingStatus(){
+        messagesViewModel.checkTypingStatus(friendId)
+        messagesViewModel.typingStatus.observe(viewLifecycleOwner) {
+            if(it){
+                messagesBinding?.typing?.visibility = View.VISIBLE
+            }else {
+                messagesBinding?.typing?.visibility = View.GONE
+            }
+        }
     }
 
     private fun checkOnlineStatus(){
         messagesViewModel.checkOnlineStatus(friendId)
         messagesViewModel.onlineStatus.observe(viewLifecycleOwner) {
-            Log.d("Online Status", it.toString())
             if(it){
                 (activity as MenuActivity).menuBinding.ivOnline.visibility = View.VISIBLE
             }else{
                 (activity as MenuActivity).menuBinding.ivOnline.visibility = View.INVISIBLE
             }
-        }
-    }
-
-    private fun setUpChats() {
-        messagesViewModel.fetchMessage()
-        messagesViewModel.chats.observe(viewLifecycleOwner) {
-            lifecycleScope.launch {
-                messagesDao.upsert(it)
-            }
-            messagesBinding?.rvChat?.smoothScrollToPosition(messageAdapter.itemCount)
         }
     }
 
@@ -93,10 +107,9 @@ class MessagesFragment : Fragment() {
 
     private fun setUpRecyclerView() {
         messageAdapter = MessageAdapter(dp, friendId)
-        lifecycleScope.launch {
-            messagesDao.fetchMessage(chatRoomId).collect {
-                messageAdapter.differ.submitList(it)
-            }
+        messagesViewModel.messages.observe(viewLifecycleOwner){
+            messageAdapter.differ.submitList(it)
+            messagesBinding?.rvChat?.smoothScrollToPosition(messageAdapter.itemCount)
         }
         val linearLayoutManager = LinearLayoutManager(context)
         linearLayoutManager.stackFromEnd = true
@@ -106,6 +119,7 @@ class MessagesFragment : Fragment() {
 
     override fun onPause() {
         super.onPause()
+        messagesViewModel.updateTypingStatus(friendId, "N")
         if(messageAdapter.differ.currentList.last().senderId == friendId){
             messagesViewModel.messageStatus()
         }

@@ -19,7 +19,23 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_chat"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent"
+            android:layout_marginBottom="20dp"/>
+
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/typing"
+            android:layout_width="70dp"
+            android:layout_height="40dp"
+            android:background="@color/bg"
+            app:lottie_rawRes="@raw/typing"
+            app:lottie_autoPlay="true"
+            app:lottie_loop="true"
+            app:lottie_speed="1"
+            android:visibility="invisible"
+            android:layout_marginStart="5dp"
+            android:layout_marginBottom="12dp"
+            android:layout_gravity="start|bottom"
+            android:scaleType="centerCrop"/>
 
     </FrameLayout>
 
@@ -47,7 +63,7 @@
             android:textColorHint="@color/hint_text"
             android:textColor="@color/main_text_color"
             android:inputType="textCapSentences"
-            android:textSize="16sp"/>
+            android:textSize="13sp"/>
 
         <ImageButton
             android:id="@+id/ib_send"

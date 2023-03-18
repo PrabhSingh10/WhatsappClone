@@ -19,7 +19,6 @@ class ChatFragment : Fragment() {
     private var chatBinding : FragmentChatBinding? = null
     private lateinit var chatAdapter : ChatAdapter
     private lateinit var chatViewModel : ChatViewModel
-    private lateinit var chatsDao : ChatsDao
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -27,7 +26,6 @@ class ChatFragment : Fragment() {
     ): View? {
 
         chatViewModel = (activity as MainActivity).chatViewModel
-        chatsDao = (activity as MainActivity).chatsDao
         chatBinding = FragmentChatBinding.inflate(
             inflater, container, false
         )
@@ -36,26 +34,14 @@ class ChatFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        fetchingFriends()
         setUpRecyclerView()
-    }
-
-    private fun fetchingFriends() {
-        chatViewModel.fetchingChat()
-        chatViewModel.friendList.observe(viewLifecycleOwner){
-            lifecycleScope.launch {
-                chatsDao.upsert(it)
-            }
-        }
     }
 
     private fun setUpRecyclerView() {
         chatBinding?.recyclerViewChat?.layoutManager = LinearLayoutManager(context)
         chatAdapter = ChatAdapter()
-        lifecycleScope.launch {
-            chatsDao.fetchFriends().collect{
-                chatAdapter.differ.submitList(it)
-            }
+        chatViewModel.friends.observe(viewLifecycleOwner){
+            chatAdapter.differ.submitList(it)
         }
         chatBinding?.recyclerViewChat?.adapter = chatAdapter
     }
